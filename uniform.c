@@ -14,12 +14,6 @@
  */
 
 /*
- *  SAMPLE PARAM is the number of random trials in order to find an existing unsatisfied clause
- */
-
-#define SAMPLE_PARAM 10
-
-/*
  *	Debug mode = 1 prints the data of the solving into the console.
  */
 
@@ -181,6 +175,14 @@ read_cnf (char const *filename) {
  *
  */
 
+/*
+ *  SAMPLE PARAM is the number of random trials in order to find an existing unsatisfied clause
+ *  MILESTONE_PARAM is the number of milestones in the char* constraints
+ */
+
+#define SAMPLE_PARAM 10
+#define MILESTONE_PARAM 100 
+
 int		num_variables;
 int		num_clauses;
 int		*hold_size;
@@ -188,6 +190,8 @@ int		**hold;
 int		num_constraints;
 char	*constraints;
 char 	*solution;
+int     *milestones;
+int     step;
 
 int
 abs(int x) {
@@ -233,20 +237,38 @@ is_solved(int **cnf, int i) {
 
 char
 insert(int i) {
+    int     j;
 
 	if (constraints[i] == 'y')
 		return ('E'); // exists already
-	constraints[i] = 'y';
+	j = 0;
+    while (j * step <= i)
+        j++;
+    while (j * step < num_clauses) {
+        milestones[j]++;
+        j++;
+    }
+    milestones[j]++;
+    constraints[i] = 'y';
 	num_constraints++;
 	return ('C'); // is created
 }
 
 char
 extract(int i) {
+    int     j;
 
 	if (constraints[i] == 'n')
 		return ('E'); // exists already
-	constraints[i] = 'n';
+	j = 0;
+    while (j * step <= i)
+        j++;
+    while (j * step < num_clauses) {
+        milestones[j]--;
+        j++;
+    }
+    milestones[j]--;
+    constraints[i] = 'n';
 	num_constraints--;
 	return ('C'); // is created
 }
@@ -310,6 +332,20 @@ initiate(int **cnf) {
 		}
 		i++;
 	}
+    
+    step = num_clauses / MILESTONE_PARAM;
+    if (step < 100)
+        step = 100;
+    i = 0;
+    while (i * step < num_clauses)
+        i++;
+    milestones = malloc(sizeof(int) * (i + 1));
+    i = 0;
+    while (i * step < num_clauses) {
+        milestones[i] = i * step;
+        i++;
+    }
+    milestones[i] = num_clauses;
 }
 
 void
@@ -350,6 +386,7 @@ int
 find(int r) {
 	int		a;
 	int		i;
+    int     j;
 	char	*ret;
 
 	if (num_clauses / num_constraints < SAMPLE_PARAM) { 
@@ -360,9 +397,12 @@ find(int r) {
 				return (i);
 			a++;
 		}
-	}	
-	a = 0;
-	ret = constraints - 1;
+    }
+    j = 0;
+    while (j * step < num_clauses && milestones[j] <= r)
+        j++;
+    a = milestones[j - 1];
+	ret = constraints + (j - 1) * step - 1;
 	while (a <= r) {
 		ret++;
 		ret = strchr(ret, 'y');
