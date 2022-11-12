@@ -5,4 +5,6 @@ If you want to compile the SAT Solver: gcc -Wall -Wextra -Werror -Ofast uniform.
   
 If you are into science fiction and/or blockchain: https://jheusser.github.io/2013/02/03/satcoin.html  
   
+It is currently in revision process awaiting peer review for the MPC by Springer.  
+    
 -- Charles
